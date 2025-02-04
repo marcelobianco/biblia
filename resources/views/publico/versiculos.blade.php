@@ -29,12 +29,12 @@
                 <!-- Sidebar -->
                 <div class="col-md-4">
                     <div class="sidebar rounded">
-                        <h4>Apocalipse</h4>
+                        <h4>{{ $versiculos->first()->livro->nome }}</h4>
                         <div class="chapter-links mb-4">
                             <!-- Links para os capítulos -->
                             <div class="row g-2">
                                 @foreach ( $capitulos as $capitulo )
-                                    <div class="col-auto"><a href="{{ route('biblia', [$versiculos->first()->livro->versao->abreviacao, $versiculos->first()->livro->abreviacao ,$capitulo->capitulo]) }}">{{ $capitulo->capitulo }}</a></div>
+                                    <div class="col-auto"><a href="{{ route('versiculos', [$versiculos->first()->livro->versao->abreviacao, $versiculos->first()->livro->abreviacao ,$capitulo->capitulo]) }}">{{ $capitulo->capitulo }}</a></div>
                                 @endforeach
                             </div>
                         </div>
@@ -42,8 +42,15 @@
                             <div class="mb-2">
                                 <a href="#" class="text-decoration-none">📖 Bíblia</a>
                             </div>
+                            
                             <div class="mb-2">
                                 <a href="#" class="text-decoration-none">📚 Bíblia Secundária</a>
+                                @if($proximoCapitulo)
+                                    <a href="{{ route('versiculos', [$versiculos->first()->livro->versao->abreviacao, $versiculos->first()->livro->abreviacao ,$proximoCapitulo]) }}" class="btn btn-primary">Próximo Capítulo</a>
+                                @endif
+                                @if($proximoLivro)
+                                    <a href="{{ route('versiculos', [$versiculos->first()->livro->versao->abreviacao, $proximoLivro ,1]) }}" class="btn btn-primary">Próximo Livro</a>
+                                @endif
                             </div>
                         </div>
                     </div>

@@ -7,9 +7,12 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', Homecontroller::class);
 
-Route::get('/{versao}', [Bibliacontroller::class, 'livros'])->name('biblia');
-Route::get('/{versao}/{livro}', [Bibliacontroller::class, 'capitulos'])->name('biblia');
-Route::get('/{versao}/{livro}/{capitulo}', [Bibliacontroller::class, 'versiculos'])->name('biblia');
+Route::get('/{versao}', [Bibliacontroller::class, 'listaLivros'])->name('livros');
+Route::get('/{versao}/{livro}', [Bibliacontroller::class, 'listaCapitulos'])->name('capitulos');
+Route::get('/{versao}/{livro}/{capitulo}', [Bibliacontroller::class, 'listaVersiculos'])->name('versiculos');
+Route::get('/{versao}/{livro}/{capitulo}/{versiculos?}', [Bibliacontroller::class, 'listaVersiculos'])
+    ->where('versiculos', '[0-9]+(-[0-9]+)?')
+    ->name('filtra_versiculos');
 
 
 Route::middleware('auth')->group(function () {

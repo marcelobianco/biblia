@@ -13,7 +13,7 @@ class Bibliacontroller extends Controller
     /**
      * Handle the incoming request.
      */
-    public function livros(string $versao)
+    public function listaLivros(string $versao)
     {
         $livros = Livro::whereHas('versao', function ($query) use ($versao) {
             $query->where('abreviacao', $versao);
@@ -27,7 +27,7 @@ class Bibliacontroller extends Controller
     /**
      * Handle the incoming request.
      */
-    public function capitulos(string $versao, string $livro)
+    public function listaCapitulos(string $versao, string $livro)
     {
         $capitulos = Versiculo::whereHas('livro', function ($query) use ($versao, $livro) {
             $query->where('abreviacao', $livro)
@@ -45,7 +45,7 @@ class Bibliacontroller extends Controller
     /**
      * Handle the incoming request.
      */
-    public function versiculos(string $versao, string $livro, string $capitulo)
+    public function listaVersiculos(string $versao, string $livro, string $capitulo, string $versiculos = null)
     {
         // $versiculos = Versiculo::whereHas('livro', function ($query) use ($versao, $livro) {
         //     $query->where('abreviacao', $livro)
@@ -70,7 +70,17 @@ class Bibliacontroller extends Controller
                 });
         });
 
-        // Buscar os versículos do capítulo específico
+        // Se houver um intervalo de versículos (ex: "1-2") ou um versículo específico
+        if ($versiculos) {
+            $intervalo = explode('-', $versiculos);
+            if (count($intervalo) === 2) {
+                $queryBase->whereBetween('versiculo', [$intervalo[0], $intervalo[1]]);
+            } else {
+                $queryBase->where('versiculo', $versiculos);
+            }
+        }
+
+        // Buscar os versículos filtrados
         $versiculos = (clone $queryBase)
             ->with('livro')
             ->where('capitulo', $capitulo)
@@ -84,9 +94,36 @@ class Bibliacontroller extends Controller
             ->orderBy('capitulo')
             ->get();
 
+        // Determinar o próximo capítulo
+        $proximoCapitulo = (clone $queryBase)
+            ->where('capitulo', '>', $capitulo)
+            ->orderBy('capitulo')
+            ->first();
+        $proximoLivro = null; // Garante que a variável sempre exista
+        if (!$proximoCapitulo) {
+            // Se não houver um próximo capítulo, buscar o próximo livro
+            $proximoLivro = Livro::whereHas('versao', function ($query) use ($versao) {
+                    $query->where('abreviacao', $versao);
+                })
+                ->where('id', '>', $versiculos->first()->livro_id)
+                ->first();
+                
+            if ($proximoLivro) {
+                $proximoCapitulo = Versiculo::whereHas('livro', function ($query) use ($versao, $proximoLivro) {
+                    $query->where('abreviacao', $proximoLivro->abreviacao)
+                        ->whereHas('versao', function ($query) use ($versao) {
+                            $query->where('abreviacao', $versao);
+                        });
+                })->select('capitulo')->orderBy('capitulo')->first();
+            }
+        }
+            
+
         return view('publico.versiculos', [
             'versiculos' => $versiculos,
-            'capitulos' => $capitulos
+            'capitulos' => $capitulos,
+            'proximoCapitulo' => $proximoCapitulo ?  $proximoCapitulo->capitulo : null,
+            'proximoLivro' => $proximoLivro ? $proximoLivro?->abreviacao : null,
         ]);
     }
 }
